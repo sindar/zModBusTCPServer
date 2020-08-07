@@ -40,8 +40,16 @@ namespace zModBusTCPServer
 
             public void CloseConnection()
             {
-                this.ClientConnection.Shutdown(SocketShutdown.Both);
-                this.ClientConnection.Close();
+                try
+                {
+                    this.ClientConnection.Shutdown(SocketShutdown.Both);
+                    this.ClientConnection.Close();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Got excpetion:" + ex.Message);
+                    return;
+                }
             }
         }
 
@@ -61,7 +69,7 @@ namespace zModBusTCPServer
         {
             writeQueue = new Queue<WriteQueueItem>();
 
-            // DANGER! TODO: need to find better solution
+            // DANGER! TODO: need to find a better solution
             HoldingRegs = holdingRegs;
             InputRegs = inputRegs;
 
@@ -114,20 +122,6 @@ namespace zModBusTCPServer
             return true;
         }
 
-        //public void MakeRegsCopy(ushort[] holdingRegs, ushort[] inputRegs)
-        //{
-        //    try
-        //    {
-        //        Array.Copy(holdingRegs, HoldingRegs, holdingRegs.Length);
-        //        Array.Copy(inputRegs, InputRegs, inputRegs.Length);
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        Console.WriteLine("Error copying registers!" + ex.Message);
-        //    }
-            
-        //}
-
         public void ProcessWriteQueue()
         {
             ClientHandler clientHandler;
@@ -146,17 +140,33 @@ namespace zModBusTCPServer
                 transmitData = modBusFunctions[funcCode](receivedData);
 
                 clientHandler.queryDone.Reset();
-                clientHandler.ClientConnection.BeginSend(transmitData, 0,
-                                              transmitData.Length,
-                                              SocketFlags.None,
-                                              new AsyncCallback(SendCallback),
-                                              clientHandler);
+                try
+                {
+                    clientHandler.ClientConnection.BeginSend(transmitData, 0,
+                                                  transmitData.Length,
+                                                  SocketFlags.None,
+                                                  new AsyncCallback(SendCallback),
+                                                  clientHandler);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Got excpetion:" + ex.Message);
+                    return;
+                }
                 clientHandler.queryDone.WaitOne();
-                clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
-                                    ClientHandler.BUFFER_SIZE,
-                                    SocketFlags.None,
-                                    new AsyncCallback(ReceiveCallback),
-                                    clientHandler);
+                try
+                {
+                    clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
+                                        ClientHandler.BUFFER_SIZE,
+                                        SocketFlags.None,
+                                        new AsyncCallback(ReceiveCallback),
+                                        clientHandler);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Got excpetion:" + ex.Message);
+                    return;
+                }
             }
         }
 
@@ -187,12 +197,19 @@ namespace zModBusTCPServer
                                                       clientHandler,
                                                       CLIENT_TIMEOUT, 
                                                       Timeout.Infinite);
-
-            clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
+            try
+            {
+                clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
                                                      ClientHandler.BUFFER_SIZE,
                                                      SocketFlags.None,
                                                      new AsyncCallback(ReceiveCallback),
                                                      clientHandler);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Got excpetion:" + ex.Message);
+                return;
+            }
         }
 
         private void NoActivityTimerCallback(object state)
@@ -268,22 +285,38 @@ namespace zModBusTCPServer
                 if (transmitData != null)
                 {
                     clientHandler.queryDone.Reset();
-                    clientHandler.ClientConnection.BeginSend(transmitData, 0,
-                                                  transmitData.Length,
-                                                  SocketFlags.None,
-                                                  new AsyncCallback(SendCallback),
-                                                  clientHandler);
+                    try
+                    {
+                        clientHandler.ClientConnection.BeginSend(transmitData, 0,
+                                                      transmitData.Length,
+                                                      SocketFlags.None,
+                                                      new AsyncCallback(SendCallback),
+                                                      clientHandler);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Got excpetion:" + ex.Message);
+                        return;
+                    }
                     clientHandler.queryDone.WaitOne();
                 }
 
                 clientHandler.noActivityTimer.Change(CLIENT_TIMEOUT,
                                                      Timeout.Infinite);
 
-                clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
-                                            ClientHandler.BUFFER_SIZE,
-                                            SocketFlags.None,
-                                            new AsyncCallback(ReceiveCallback),
-                                            clientHandler);
+                try
+                {
+                    clientHandler.ClientConnection.BeginReceive(clientHandler.Buffer, 0,
+                                                ClientHandler.BUFFER_SIZE,
+                                                SocketFlags.None,
+                                                new AsyncCallback(ReceiveCallback),
+                                                clientHandler);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Got excpetion:" + ex.Message);
+                    return;
+                }
             }
         }
 
